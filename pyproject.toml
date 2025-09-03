@@ -1,0 +1,15 @@
+[project]
+name = "cpp-forge"
+version = "0.0.1"
+description = "Create-react-app for modern C++"
+requires-python = ">=3.9"
+authors = [{name="Antoine Duteyrat"}]
+readme = "README.md"
+dependencies = []
+
+[project.scripts]
+cpp-forge = "forge_cpp.cli:main"
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
