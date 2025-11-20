@@ -1,18 +1,40 @@
 #!/usr/bin/env bash
 
 forge_init() {
-    local project_name="${1:-my_project}"
+    local project_name="$1"
     
-    if [ -f "$FORGE_CONFIG" ]; then
-        error "Project already initialized (forge.json exists)"
+    # Case 1: forge init (no args) : initialize in current directory
+    if [ -z "$project_name" ]; then
+        if [ -f "$FORGE_CONFIG" ]; then
+            error "Project already initialized (forge.json exists)"
+        fi
+        
+        project_name=$(basename "$PWD")
+        info "Initializing project in current directory: $project_name"
+        _create_project_structure "$project_name"
+        
+    # Case 2: forge init my_project : create new directory
+    else
+        if [ -d "$project_name" ]; then
+            error "Directory '$project_name' already exists"
+        fi
+        
+        info "Creating project: $project_name"
+        mkdir "$project_name"
+        cd "$project_name" || error "Failed to enter project directory"
+        _create_project_structure "$project_name"
+        
+        echo ""
+        info "Next steps:"
+        echo "  cd $project_name"
+        echo "  forge build"
+        echo "  forge run"
     fi
-    
-    info "Initializing project: $project_name"
-    
-    # Create project directory
-    mkdir -p "$project_name"
-    cd "$project_name" || error "Failed to enter project directory"
+}
 
+_create_project_structure() {
+    local project_name="$1"
+    
     # Create directory structure
     mkdir -p src include libs build tests
     
@@ -52,15 +74,4 @@ libs/
 EOF
     
     success "Project initialized!"
-    echo ""
-    echo "Project structure:"
-    echo "  src/       - Source files"
-    echo "  include/   - Header files"
-    echo "  libs/      - Dependencies"
-    echo "  build/     - Build output"
-    echo "  tests/     - Test files"
-    echo ""
-    info "Next steps:"
-    echo "  forge build    - Build your project"
-    echo "  forge run      - Run your project"
 }
