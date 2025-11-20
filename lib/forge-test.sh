@@ -20,14 +20,81 @@ forge_test() {
     if [ -z "$test_files" ]; then
         info "No test files found in tests/"
         info "Test files should match: *_test.cpp or test_*.cpp"
-        info "Creating example test..."
         _create_example_test
-        info "Created example test in tests/example_test.cpp and running it."
-        # Find newly created test file
-        test_files=$(find tests -name "*_test.cpp" -o -name "test_*.cpp" 2>/dev/null)
+        info "Created example test in tests/example_test.cpp"
         echo ""
     fi
+
+    test_files=$(find tests -name "*_test.cpp" -o -name "test_*.cpp" 2>/dev/null)
     
+    local use_cmake=$(jq -r '.use_cmake' "$FORGE_CONFIG" 2>/dev/null)
+    
+    if [ "$use_cmake" = "true" ] || [ -f "CMakeLists.txt" ]; then
+        _test_with_cmake
+    else
+        _test_direct
+    fi
+}
+
+_test_with_cmake() {
+    info "Building tests with CMake..."
+    
+    # Check if cmake is installed
+    if ! command -v cmake >/dev/null 2>&1; then
+        error "CMake not found. Install with: apt install cmake / brew install cmake"
+    fi
+    
+    # Create build directory
+    mkdir -p build
+    cd build || error "Failed to enter build directory"
+    
+    # Configure if needed
+    if [ ! -f "CMakeCache.txt" ]; then
+        cmake .. >/dev/null 2>&1 || {
+            cd ..
+            error "CMake configuration failed"
+        }
+    fi
+    
+    # Build tests
+    if ! cmake --build . >/dev/null 2>&1; then
+        cd ..
+        error "Test compilation failed"
+    fi
+    
+    cd ..
+    
+    info "Running tests..."
+    echo ""
+    
+    local passed=0
+    local failed=0
+    local total=0
+    
+    # Run each test
+    for test_file in build/tests/*; do
+        if [ -x "$test_file" ] && [ -f "$test_file" ]; then
+            local test_name=$(basename "$test_file")
+            
+            info "Running $test_name..."
+            
+            if "$test_file" 2>&1; then
+                success "$test_name passed"
+                ((passed++))
+            else
+                error_no_exit "$test_name failed"
+                ((failed++))
+            fi
+            
+            ((total++))
+            echo ""
+        fi
+    done
+    
+    _print_summary "$passed" "$failed" "$total"
+}
+
+_test_direct() {
     info "Running tests..."
     echo ""
     
@@ -50,6 +117,9 @@ forge_test() {
     local passed=0
     local failed=0
     local total=0
+    
+    # Find all test files
+    local test_files=$(find tests -name "*_test.cpp" -o -name "test_*.cpp" 2>/dev/null)
     
     # Run each test
     for test_file in $test_files; do
@@ -79,7 +149,14 @@ forge_test() {
         echo ""
     done
     
-    # Summary
+    _print_summary "$passed" "$failed" "$total"
+}
+
+_print_summary() {
+    local passed=$1
+    local failed=$2
+    local total=$3
+    
     echo "════════════════════════════════════════"
     if [ $failed -eq 0 ]; then
         success "All tests passed ($passed/$total)"
