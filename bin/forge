@@ -5,7 +5,7 @@ FORGE_CONFIG="forge.json"
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIB_DIR="$SCRIPT_DIR/lib"
+export LIB_DIR="$SCRIPT_DIR/lib"
 
 # Source logging functions
 source "$LIB_DIR/log.sh"

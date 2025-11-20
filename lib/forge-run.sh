@@ -12,7 +12,7 @@ forge_run() {
     # Build first if executable doesn't exist or sources are newer
     if [ ! -f "$output" ] || [ -n "$(find src -name "*.cpp" -newer "$output" 2>/dev/null)" ]; then
         info "Building project first..."
-        source "$(dirname "$0")/forge-build.sh"
+        source "$LIB_DIR/forge-build.sh"
         forge_build
         echo ""
     fi
