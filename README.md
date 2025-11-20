@@ -91,7 +91,7 @@ brew install git jq
 ## Roadmap
 
 - [ ] CMake integration for complex projects
-- [ ] Unit testing support (`forge test`)
+- [x] Unit testing support (`forge test`)
 - [ ] Version pinning for dependencies
 - [ ] Project templates (CLI, library, game)
 - [ ] Publishing system
